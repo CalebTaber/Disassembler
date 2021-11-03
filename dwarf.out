@@ -168,7 +168,7 @@ Address            Line   Column File   ISA Discriminator Flags
 
 debug_line[0x0000025f]
 Line table prologue:
-    total_length: 0x0000026a
+    total_length: 0x0000029b
          version: 3
  prologue_length: 0x00000236
  min_inst_length: 1
@@ -332,5 +332,17 @@ Address            Line   Column File   ISA Discriminator Flags
 0x00000000000011cd     13      5      1   0             0  is_stmt
 0x00000000000011de     14      5      1   0             0  is_stmt
 0x00000000000011e8     15      1      1   0             0  is_stmt
-0x00000000000011eb     15      1      1   0             0  is_stmt end_sequence
+0x00000000000011eb     17     22      1   0             0  is_stmt
+0x00000000000011fa     18      8      1   0             0  is_stmt
+0x0000000000001200     19     10      1   0             0  is_stmt
+0x0000000000001210     18     17      1   0             0  is_stmt
+0x0000000000001211     20      1      1   0             0  is_stmt
+0x0000000000001213     22     13      1   0             0  is_stmt
+0x000000000000121f     23     14      1   0             0  is_stmt
+0x0000000000001226     23      5      1   0             0  is_stmt
+0x0000000000001228     24      9      1   0             3  is_stmt
+0x000000000000123e     23     30      1   0             3  is_stmt
+0x0000000000001242     23      5      1   0             1  is_stmt
+0x0000000000001248     26      1      1   0             0  is_stmt
+0x000000000000124c     26      1      1   0             0  is_stmt end_sequence
 

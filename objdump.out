@@ -50,8 +50,8 @@ Disassembly of section .text:
     106d:	48 83 e4 f0          	and    $0xfffffffffffffff0,%rsp
     1071:	50                   	push   %rax
     1072:	54                   	push   %rsp
-    1073:	4c 8d 05 e6 01 00 00 	lea    0x1e6(%rip),%r8        # 1260 <__libc_csu_fini>
-    107a:	48 8d 0d 6f 01 00 00 	lea    0x16f(%rip),%rcx        # 11f0 <__libc_csu_init>
+    1073:	4c 8d 05 46 02 00 00 	lea    0x246(%rip),%r8        # 12c0 <__libc_csu_fini>
+    107a:	48 8d 0d cf 01 00 00 	lea    0x1cf(%rip),%rcx        # 1250 <__libc_csu_init>
     1081:	48 8d 3d c1 00 00 00 	lea    0xc1(%rip),%rdi        # 1149 <main>
     1088:	ff 15 52 2f 00 00    	callq  *0x2f52(%rip)        # 3fe0 <__libc_start_main@GLIBC_2.2.5>
     108e:	f4                   	hlt    
@@ -163,54 +163,91 @@ Disassembly of section .text:
     11e8:	90                   	nop
     11e9:	5d                   	pop    %rbp
     11ea:	c3                   	retq   
-    11eb:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
 
-00000000000011f0 <__libc_csu_init>:
-    11f0:	f3 0f 1e fa          	endbr64 
-    11f4:	41 57                	push   %r15
-    11f6:	4c 8d 3d bb 2b 00 00 	lea    0x2bbb(%rip),%r15        # 3db8 <__frame_dummy_init_array_entry>
-    11fd:	41 56                	push   %r14
-    11ff:	49 89 d6             	mov    %rdx,%r14
-    1202:	41 55                	push   %r13
-    1204:	49 89 f5             	mov    %rsi,%r13
-    1207:	41 54                	push   %r12
-    1209:	41 89 fc             	mov    %edi,%r12d
-    120c:	55                   	push   %rbp
-    120d:	48 8d 2d ac 2b 00 00 	lea    0x2bac(%rip),%rbp        # 3dc0 <__do_global_dtors_aux_fini_array_entry>
-    1214:	53                   	push   %rbx
-    1215:	4c 29 fd             	sub    %r15,%rbp
-    1218:	48 83 ec 08          	sub    $0x8,%rsp
-    121c:	e8 df fd ff ff       	callq  1000 <_init>
-    1221:	48 c1 fd 03          	sar    $0x3,%rbp
-    1225:	74 1f                	je     1246 <__libc_csu_init+0x56>
-    1227:	31 db                	xor    %ebx,%ebx
-    1229:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
-    1230:	4c 89 f2             	mov    %r14,%rdx
-    1233:	4c 89 ee             	mov    %r13,%rsi
-    1236:	44 89 e7             	mov    %r12d,%edi
-    1239:	41 ff 14 df          	callq  *(%r15,%rbx,8)
-    123d:	48 83 c3 01          	add    $0x1,%rbx
-    1241:	48 39 dd             	cmp    %rbx,%rbp
-    1244:	75 ea                	jne    1230 <__libc_csu_init+0x40>
-    1246:	48 83 c4 08          	add    $0x8,%rsp
-    124a:	5b                   	pop    %rbx
-    124b:	5d                   	pop    %rbp
-    124c:	41 5c                	pop    %r12
-    124e:	41 5d                	pop    %r13
-    1250:	41 5e                	pop    %r14
-    1252:	41 5f                	pop    %r15
-    1254:	c3                   	retq   
-    1255:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0(%rax,%rax,1)
-    125c:	00 00 00 00 
+00000000000011eb <recurse>:
+    11eb:	f3 0f 1e fa          	endbr64 
+    11ef:	55                   	push   %rbp
+    11f0:	48 89 e5             	mov    %rsp,%rbp
+    11f3:	48 83 ec 10          	sub    $0x10,%rsp
+    11f7:	89 7d fc             	mov    %edi,-0x4(%rbp)
+    11fa:	83 7d fc 05          	cmpl   $0x5,-0x4(%rbp)
+    11fe:	74 10                	je     1210 <recurse+0x25>
+    1200:	83 45 fc 01          	addl   $0x1,-0x4(%rbp)
+    1204:	8b 45 fc             	mov    -0x4(%rbp),%eax
+    1207:	89 c7                	mov    %eax,%edi
+    1209:	e8 dd ff ff ff       	callq  11eb <recurse>
+    120e:	eb 01                	jmp    1211 <recurse+0x26>
+    1210:	90                   	nop
+    1211:	c9                   	leaveq 
+    1212:	c3                   	retq   
 
-0000000000001260 <__libc_csu_fini>:
-    1260:	f3 0f 1e fa          	endbr64 
-    1264:	c3                   	retq   
+0000000000001213 <loop>:
+    1213:	f3 0f 1e fa          	endbr64 
+    1217:	55                   	push   %rbp
+    1218:	48 89 e5             	mov    %rsp,%rbp
+    121b:	48 83 ec 10          	sub    $0x10,%rsp
+    121f:	c7 45 fc 00 00 00 00 	movl   $0x0,-0x4(%rbp)
+    1226:	eb 1a                	jmp    1242 <loop+0x2f>
+    1228:	8b 45 fc             	mov    -0x4(%rbp),%eax
+    122b:	89 c6                	mov    %eax,%esi
+    122d:	48 8d 3d 08 0e 00 00 	lea    0xe08(%rip),%rdi        # 203c <_IO_stdin_used+0x3c>
+    1234:	b8 00 00 00 00       	mov    $0x0,%eax
+    1239:	e8 12 fe ff ff       	callq  1050 <printf@plt>
+    123e:	83 45 fc 01          	addl   $0x1,-0x4(%rbp)
+    1242:	83 7d fc 09          	cmpl   $0x9,-0x4(%rbp)
+    1246:	7e e0                	jle    1228 <loop+0x15>
+    1248:	90                   	nop
+    1249:	90                   	nop
+    124a:	c9                   	leaveq 
+    124b:	c3                   	retq   
+    124c:	0f 1f 40 00          	nopl   0x0(%rax)
+
+0000000000001250 <__libc_csu_init>:
+    1250:	f3 0f 1e fa          	endbr64 
+    1254:	41 57                	push   %r15
+    1256:	4c 8d 3d 5b 2b 00 00 	lea    0x2b5b(%rip),%r15        # 3db8 <__frame_dummy_init_array_entry>
+    125d:	41 56                	push   %r14
+    125f:	49 89 d6             	mov    %rdx,%r14
+    1262:	41 55                	push   %r13
+    1264:	49 89 f5             	mov    %rsi,%r13
+    1267:	41 54                	push   %r12
+    1269:	41 89 fc             	mov    %edi,%r12d
+    126c:	55                   	push   %rbp
+    126d:	48 8d 2d 4c 2b 00 00 	lea    0x2b4c(%rip),%rbp        # 3dc0 <__do_global_dtors_aux_fini_array_entry>
+    1274:	53                   	push   %rbx
+    1275:	4c 29 fd             	sub    %r15,%rbp
+    1278:	48 83 ec 08          	sub    $0x8,%rsp
+    127c:	e8 7f fd ff ff       	callq  1000 <_init>
+    1281:	48 c1 fd 03          	sar    $0x3,%rbp
+    1285:	74 1f                	je     12a6 <__libc_csu_init+0x56>
+    1287:	31 db                	xor    %ebx,%ebx
+    1289:	0f 1f 80 00 00 00 00 	nopl   0x0(%rax)
+    1290:	4c 89 f2             	mov    %r14,%rdx
+    1293:	4c 89 ee             	mov    %r13,%rsi
+    1296:	44 89 e7             	mov    %r12d,%edi
+    1299:	41 ff 14 df          	callq  *(%r15,%rbx,8)
+    129d:	48 83 c3 01          	add    $0x1,%rbx
+    12a1:	48 39 dd             	cmp    %rbx,%rbp
+    12a4:	75 ea                	jne    1290 <__libc_csu_init+0x40>
+    12a6:	48 83 c4 08          	add    $0x8,%rsp
+    12aa:	5b                   	pop    %rbx
+    12ab:	5d                   	pop    %rbp
+    12ac:	41 5c                	pop    %r12
+    12ae:	41 5d                	pop    %r13
+    12b0:	41 5e                	pop    %r14
+    12b2:	41 5f                	pop    %r15
+    12b4:	c3                   	retq   
+    12b5:	66 66 2e 0f 1f 84 00 	data16 nopw %cs:0x0(%rax,%rax,1)
+    12bc:	00 00 00 00 
+
+00000000000012c0 <__libc_csu_fini>:
+    12c0:	f3 0f 1e fa          	endbr64 
+    12c4:	c3                   	retq   
 
 Disassembly of section .fini:
 
-0000000000001268 <_fini>:
-    1268:	f3 0f 1e fa          	endbr64 
-    126c:	48 83 ec 08          	sub    $0x8,%rsp
-    1270:	48 83 c4 08          	add    $0x8,%rsp
-    1274:	c3                   	retq   
+00000000000012c8 <_fini>:
+    12c8:	f3 0f 1e fa          	endbr64 
+    12cc:	48 83 ec 08          	sub    $0x8,%rsp
+    12d0:	48 83 c4 08          	add    $0x8,%rsp
+    12d4:	c3                   	retq   
