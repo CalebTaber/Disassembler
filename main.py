@@ -10,7 +10,7 @@ import sys
 # Command for finding function names and addrs in objdump:      grep -E '[[:alnum:]]{16}\s<.*>' objdump.out
 # Command for finding file names in dwarf:                      grep -E '\s*name:\s".*.c"' dwarf.out
 # Command for assembly addrs and source lines from dwarf:       grep -E '0x[[:alnum:]]{16}\s+[0-9]+\s+' dwarf.out
-#   Can tell where functions end b/c of "is_stmt end_sequence"
+#   Can tell where files end b/c of "is_stmt end_sequence"
 # Command for getting source line:                              sed 'n!d' file, where n = line num, and file is the file
 
 
@@ -39,13 +39,10 @@ class FileInfo:
 
 print(str(sys.argv))
 
-objdump = "objdump -d " + sys.argv[1] + " > objdump.out"
-dwarfdump = "llvm-dwarfdump --debug-line " + sys.argv[1] + " > dwarf.out"
-objExit = os.system(objdump)
-dwarfExit = os.system(dwarfdump)
-
-print("Result: ", objExit)
-print("Result: ", dwarfExit)
+# objdump = "objdump -d " + sys.argv[1] + " > objdump.out"
+# dwarfdump = "llvm-dwarfdump --debug-line " + sys.argv[1] + " > dwarf.out"
+# objExit = os.system(objdump)
+# dwarfExit = os.system(dwarfdump)
 
 newHTMLFile("Example")
 

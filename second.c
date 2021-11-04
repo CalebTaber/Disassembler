@@ -24,3 +24,7 @@ void loop() {
         printf("Loop %d\n", i);
     }
 }
+
+int multiple_return_stmts(int input) {
+    if (input % 2 == 1) return 1;
+    else return 0;
