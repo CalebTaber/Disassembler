@@ -13,7 +13,7 @@ if [ ! -d "./data" ]; then
 fi
 
 # Extract function names and addrs from objdump output
-grep -E '[[:alnum:]]{16}\s<.*>' objdump.out | perl -0 -pe 's/\n\Z//' > ./data/fun_names_tmp
+grep -E '[[:alnum:]]{16}\s<.*>' objdump.out | sed 's/<//g' | sed 's/>//g' | sed 's/://g' | perl -0 -pe 's/\n\Z//' > ./data/fun_names
 
 # Add source file names to an array
 source_names=()
@@ -49,21 +49,6 @@ do
   name_index=$((name_index+1))
   s=$((e+1))
 done
-
-
-# Extract function names from brackets <>
-if [ -f ./data/fun_names ]; then
-  rm ./data/fun_names
-fi
-
-for line in $(grep -oE '^.*\s.*$' ./data/fun_names_tmp)
-do
-  echo "$line" > ./data/tmp
-  sed 's/<//g' ./data/tmp | sed 's/>//g' | sed 's/://g' >> ./data/fun_names
-done
-rm ./data/tmp
-rm ./data/fun_names_tmp
-
 
 
 
