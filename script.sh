@@ -45,7 +45,7 @@ do
     rm $output_name
   fi
   
-  sed -n "$s,${e}p" ./data/addrs_src_lines | perl -0 -pe 's/\n\Z//' >> $output_name
+  sed -n "$s,${end}p" ./data/addrs_src_lines | perl -0 -pe 's/\n\Z//' >> $output_name
   name_index=$((name_index+1))
   s=$((e+1))
 done
