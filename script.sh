@@ -13,13 +13,13 @@ if [ ! -d "./data" ]; then
 fi
 
 # Extract function names and addrs from objdump output
-grep -E '[[:alnum:]]{16}\s<.*>' objdump.out | perl -0 -pe 's/\n\Z//' > ./data/fun_names
+grep -E '[[:alnum:]]{16}\s<.*>' objdump.out | perl -0 -pe 's/\n\Z//' > ./data/fun_names_tmp
 
 # Add source file names to an array
 source_names=()
 i=0
 # Command here extracts the source file names from the dwarfdump output
-for name in $(grep -oE '".*.c"' dwarf.out | perl -0 -pe 's/\n\Z//' | sed 's/"//g')
+for name in $(grep -oE '".*.c"' dwarf.out | perl -0 -pe 's/\n\Z//' | sed 's/"//g' | uniq)
 do
   source_names[i]=$name
   i=$((i+1))
@@ -30,7 +30,7 @@ grep -E '0x[[:alnum:]]{16}\s+[0-9]+\s+' dwarf.out | perl -0 -pe 's/\n\Z//' > ./d
 
 # Want to separate assembly lines from addrs_src_lines into separate files according to the file name order in source_names
 
-# Gets line numbers of 'is_stmt end_sequence' 
+# Gets line numbers of 'is_stmt end_sequence'
 grep -En 'is_stmt end_sequence' ./data/addrs_src_lines | grep -oE '^[[:digit:]]+' | perl -0 -pe 's/\n\Z//' > ./data/line_nums
 
 
@@ -44,15 +44,25 @@ do
   if [ -f $output_name ]; then
     rm $output_name
   fi
-  
+
   sed -n "$s,${e}p" ./data/addrs_src_lines | perl -0 -pe 's/\n\Z//' >> $output_name
   name_index=$((name_index+1))
   s=$((e+1))
 done
 
 
+# Extract function names from brackets <>
+if [ -f ./data/fun_names ]; then
+  rm ./data/fun_names
+fi
 
-
+for line in $(grep -oE '^.*\s.*$' ./data/fun_names_tmp)
+do
+  echo "$line" > ./data/tmp
+  sed 's/<//g' ./data/tmp | sed 's/>//g' | sed 's/://g' >> ./data/fun_names
+done
+rm ./data/tmp
+rm ./data/fun_names_tmp
 
 
 
