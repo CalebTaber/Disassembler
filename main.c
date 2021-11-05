@@ -2,7 +2,7 @@
 #include "stdio.h"
 
 int three = 3;
-int eleven = return_11();
+int eleven;
 
 int main() {
     printf("Hello, world!");
@@ -12,6 +12,7 @@ int main() {
     recurse(0);
     loop();
     printf("%d\n", three);
+    eleven = 7 + three;
     printf("%d\n", eleven);
     return 0;
 }
