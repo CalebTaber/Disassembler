@@ -3,23 +3,21 @@
 # CSC 254, A4
 # 11/07/2021 
 
-
-objdump -d $1 > objdump.out
-llvm-dwarfdump --debug-line $1 > dwarf.out
-
-
 if [ ! -d "./data" ]; then
   mkdir data
 fi
 
+objdump -d $1 > ./data/objdump.out
+llvm-dwarfdump --debug-line $1 > ./data/dwarf.out
+
 # Extract function names and addrs from objdump output
-grep -E '[[:alnum:]]{16}\s<.*>' objdump.out | sed 's/<//g' | sed 's/>//g' | sed 's/://g' | perl -0 -pe 's/\n\Z//' > ./data/fun_names_tmp
+grep -E '[[:alnum:]]{16}\s<.*>' ./data/objdump.out | sed 's/<//g' | sed 's/>//g' | sed 's/://g' | perl -0 -pe 's/\n\Z//' > ./data/fun_names_tmp
 
 # Add source file names to an array
 source_names=()
 i=0
 # Command here extracts the source file names from the dwarfdump output
-for name in $(grep -oE '".*.c"' dwarf.out | sed 's/"//g' | uniq | perl -0 -pe 's/\n\Z//')
+for name in $(grep -oE '".*.c"' ./data/dwarf.out | sed 's/"//g' | uniq | perl -0 -pe 's/\n\Z//')
 do
   source_names[i]=$name
   i=$((i+1))
@@ -27,7 +25,7 @@ done
 
 echo "${source_names[*]}" > ./data/source_names
 
-grep -E '0x[[:alnum:]]{16}\s+[0-9]+\s+' dwarf.out | sed 's/0x//g' | perl -0 -pe 's/\n\Z//' > ./data/addrs_src_lines
+grep -E '0x[[:alnum:]]{16}\s+[0-9]+\s+' ./data/dwarf.out | sed 's/0x//g' | perl -0 -pe 's/\n\Z//' > ./data/addrs_src_lines
 
 
 # Want to separate assembly lines from addrs_src_lines into separate files according to the file name order in source_names

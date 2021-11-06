@@ -8,29 +8,20 @@ import sys
 
 
 def newHTMLFile(name):
-    newFile = open(name + ".html", "w")
-    newFile.write("<!DOCTYPE html>\n"
-                  "<html>\n"
-                  "<head>\n"
-                  "<title>Disassembler</title>\n"
-                  "</head>\n"
-                  "<body>\n"
-                  "<h1>Fuckin shit</h1>\n"
-                  "<p>Is what this project is gonna be</p>\n"
-                  "</body>\n"
-                  "</html>")
+    new_file = open(name + ".html", "w")
+    new_file.close()
     # Create stack of closing tags that need to be added?
     # Ex: Whenever a <p> is written, add a </p> to the stack
 
 
 class SourceLine:
-    def __int__(self, number, text, ass):
-        self.number = number    # Line number
-        self.text = text        # Line text
-        self.ass = ass          # Corresponding assembly lines (list of strings)
+    def __init__(self, number: int, text: str, ass: list):
+        self.number = number  # Line number
+        self.text = text  # Line text
+        self.ass = ass  # Corresponding assembly lines (list of strings)
 
     def to_string(self):
-        return self.number + '\t' + self.text
+        return str(self.number) + '\t' + self.text
 
     def ass_text(self):
         string = ""
@@ -41,64 +32,130 @@ class SourceLine:
 
 
 class Function:
-    def __init__(self, name, source):
-        self.name = name        # Name of the function
-        self.source = source    # List of SourceLine objects
+    def __init__(self, name: str, source: list):
+        self.name = name  # Name of the function
+        self.source = source  # List of SourceLine objects
 
     def get_source_lines(self):
         return self.source
 
 
 class File:
-    def __init__(self, name, functions):
-        self.name = name            # Name of file
+    def __init__(self, name: str, functions: list):
+        self.name = name  # Name of file
         self.functions = functions  # List of Function objects
 
 
-def read_ass_lines(end_addr, file):
+# Maps the source line to the first address of equivalent assembly
+def src_addr_dict(source_name):
+    file = open("./data/" + source_name + ".out", "r")
+    src_to_addrs = dict()
+    for line in file:
+        split = line.split()
+        addr = int(split[0], 16)
+        src = int(split[1])
+        if not src_to_addrs.__contains__(src):
+            src_to_addrs[src] = addr
+
+    file.close()
+    return src_to_addrs
+
+
+def read_ass_up_to(file, stop, incl_last):
     ass = list()
-    print()
+
+    i = 1
+    line = file.readline()
+    while line != '':
+        prev_line = file.tell()
+        if i != 1 and int(line.split()[0], 16) == stop:
+            if incl_last:
+                ass.append(line)
+            else:
+                file.seek(prev_line)
+            return ass
+
+        ass.append(line)
+        i += 1
+        line = file.readline()
+
+    return list()
 
 
-def read_function(name, source_file):
-    assembly = open("./functions/" + name, "r")
+def read_function(fun_name, source_name, src_to_addrs):
+    assembly = open("./functions/" + fun_name, "r")
+    source = open(source_name, "r")
+
+    source_lines = list()
+
+    line_num = 1
+    for src in source:
+        # Need to stop reading file when the end of the function is reached
+        # We're iterating through the entire source file, but all of the assembly is not
+        # contained within
+
+        # Maybe figure out which functions are in which source files and combine the
+        # assembly files? (in sequential order)
+
+        if src_to_addrs.__contains__(line_num + 1):
+            sl = SourceLine(line_num, src, read_ass_up_to(assembly, src_to_addrs[line_num + 1], False))
+            print(sl.to_string())
+            print(sl.ass_text())
+            source_lines.append(sl)
+        elif src_to_addrs.__contains__(line_num - 1):
+            # EOF
+            sl = SourceLine(line_num, src, read_ass_up_to(assembly, src_to_addrs[line_num], True))
+            print(sl.to_string())
+            print(sl.ass_text())
+            source_lines.append(sl)
+        else:
+            sl = SourceLine(line_num, src, list())
+            print(sl.to_string())
+            print(sl.ass_text())
+            source_lines.append(sl)
+        line_num += 1
+
+    assembly.close()
+    source.close()
+    return Function(fun_name, source_lines)
 
 
-    return None
-
-
-# file is the source file
-def read_functions(file):
+def read_functions(source_name, src_to_addrs):
     functions = list()
 
     fun_names = open("./data/fun_names", "r")
-    for addr_name in fun_names.readlines():
-        name = addr_name.split()[1]
-        functions.append(read_function(name, file))
+    for addr_name in fun_names:
+        split = addr_name.split()
+        f_addr = int(split[0], 16)
+        f_name = split[1]
+        if not list(src_to_addrs.values()).__contains__(f_addr):
+            continue
+        else:
+            functions.append(read_function(f_name, source_name, src_to_addrs))
 
     return functions
 
 
-# file is the source file
-def read_file(name):
-    file = open(name, "r")
-    return File(name, read_functions(file))
+# name of the source file
+def read_file(source_name):
+    src_to_addrs = src_addr_dict(source_name)
+    return File(source_name, read_functions(source_name, src_to_addrs))
 
 
-def parse_relevant_function_names():
+def parse_relevant_func_names():
     # Audit fun_names
     # Addr in fun_names must be found in addrs_src_lines
     fun_names = open("./data/fun_names_tmp", "r")
     asl = open("./data/addrs_src_lines", "r")
     source_addrs = list()
-    for line in asl.readlines():
+    for line in asl:
         split = line.split()
         source_addrs.append(split[0])
 
     asl.close()
 
     fun_names_final = open("./data/fun_names", "w")
-    for line in fun_names.readlines():
+    for line in fun_names:
         split = line.split()
 
         # If the function is defined in the given source code
@@ -117,14 +174,14 @@ def parse_fun_ass():
     if not exists("functions"):
         os.system("mkdir functions")
     functions = open("./data/fun_names", "r")
-    for function in functions.readlines():
-        for line in open("./objdump.out", "r"):
+    for function in functions:
+        for line in open("./data/objdump.out", "r"):
             if line == "\n":
                 write = False
                 fun_file.close()
 
             if write:
-                fun_file.write(line[4:])
+                fun_file.write(line[4:].replace(":", ""))
             else:
                 fsplit = function.split()
                 if line.startswith(fsplit[0]):
@@ -132,21 +189,22 @@ def parse_fun_ass():
                         fun_file.close()
                     write = True
                     fun_file = open("./functions/" + fsplit[1], "w")
-                    fun_file.write(line)
+                    fun_file.write(line.replace(":", ""))
 
     os.system("rm tmp")
 
 
 def main():
-    print(str(sys.argv))
+    # print(str(sys.argv))
     os.system("./script.sh main")
 
-    parse_relevant_function_names()
+    parse_relevant_func_names()
     parse_fun_ass()
 
-#    file_names = open("./data/source_names")
-#    for name in file_names.readline().split():
-#        file_data.append(read_file(name))
+    file_data = list()
+    source_names = open("./data/source_names")
+    for name in source_names.readline().split():
+        file_data.append(read_file(name))
 
     # Compile HTML file
     newHTMLFile("Example")
