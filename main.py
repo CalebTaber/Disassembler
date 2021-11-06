@@ -167,44 +167,88 @@ def parse_relevant_func_names():
     os.system("rm ./data/fun_names_tmp")
 
 
-def parse_fun_ass():
-    # Parse each relevant function's assembly into its own file
-    fun_file = open("./tmp", "w")  # A file that will contain the assembly of the function
-    write = False  # Whether a line should be written to fun_file or not
-    if not exists("functions"):
-        os.system("mkdir functions")
-    functions = open("./data/fun_names", "r")
-    for function in functions:
-        for line in open("./data/objdump.out", "r"):
-            if line == "\n":
+# def parse_fun_ass():
+#     # Parse each relevant function's assembly into its own file
+#     fun_file = open("./tmp", "w")  # A file that will contain the assembly of the function
+#     write = False  # Whether a line should be written to fun_file or not
+#     if not exists("functions"):
+#         os.system("mkdir functions")
+#     functions = open("./data/fun_names", "r")
+#     for function in functions:
+#         for line in open("./data/objdump.out", "r"):
+#             if line == "\n":
+#                 write = False
+#                 fun_file.close()
+#
+#             if write:
+#                 fun_file.write(line[4:].replace(":", ""))
+#             else:
+#                 fsplit = function.split()
+#                 if line.startswith(fsplit[0]):
+#                     if not fun_file.closed:
+#                         fun_file.close()
+#                     write = True
+#                     fun_file = open("./functions/" + fsplit[1], "w")
+#                     fun_file.write(line.replace(":", ""))
+#
+#     os.system("rm tmp")
+
+
+def addrs_in_file(file_path):
+    file = open(file_path, "r")
+    addrs = list()
+
+    for line in file:
+        addrs.append(line.split()[0])
+
+    return addrs
+
+
+def funcs():
+    src_names = open("./data/source_names", "r")
+
+    for src_name in src_names.readline().split():
+        if not exists("ass"):
+            os.system("mkdir ass")
+
+        ass_out = open("./ass/" + src_name+ ".ass", "w")
+        addrs = addrs_in_file("./data/" + src_name + ".out")
+
+        write = False
+        for ass in open("./data/objdump.out", "r"):
+            if ass == "\n":
                 write = False
-                fun_file.close()
 
             if write:
-                fun_file.write(line[4:].replace(":", ""))
-            else:
-                fsplit = function.split()
-                if line.startswith(fsplit[0]):
-                    if not fun_file.closed:
-                        fun_file.close()
-                    write = True
-                    fun_file = open("./functions/" + fsplit[1], "w")
-                    fun_file.write(line.replace(":", ""))
+                ass_out.write(ass)
+                continue
 
-    os.system("rm tmp")
+            # If a function line
+            if ass.endswith(">:\n"):
+                addr = ass.split()[0]
+                if addrs.__contains__(addr):
+                    addrs.remove(addr)
+                    write = True
+                    ass_out.write(ass)
+                else:
+                    if write:
+                        write = False
+                        ass_out.close()
+                        break
 
 
 def main():
     # print(str(sys.argv))
     os.system("./script.sh main")
 
-    parse_relevant_func_names()
-    parse_fun_ass()
+    #parse_relevant_func_names()
+    # parse_fun_ass()
+    funcs()
 
-    file_data = list()
-    source_names = open("./data/source_names")
-    for name in source_names.readline().split():
-        file_data.append(read_file(name))
+    # file_data = list()
+    # source_names = open("./data/source_names")
+    # for name in source_names.readline().split():
+    #     file_data.append(read_file(name))
 
     # Compile HTML file
     newHTMLFile("Example")
