@@ -5,6 +5,7 @@
 import os
 from os.path import exists
 import sys
+import re
 
 
 class SourceLine:
@@ -13,13 +14,25 @@ class SourceLine:
         self.text = text.replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;")  # Line text
         self.ass = ass  # Corresponding assembly lines (list of strings)
 
+    def add_links(self):
+        for name in func_addr_to_name.values():
+            for i in range(0, len(self.ass)):
+                ass_line = self.ass[i]
+                ass_line = re.sub("<", "&lsaquo;", ass_line)
+                ass_line = re.sub(">", "&rsaquo;", ass_line)
+                # Replace function calls with link to function declaration
+                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;$", "<a href=\"#" + name + "\">" + name + "</a>", ass_line)
+                # Give function declarations a name
+                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;:$", "<p id=\"" + name + "\">" + name + "</p>", ass_line)
+                self.ass[i] = ass_line
+
     def ass_text(self):
         string = ""
         for i in range(0, len(self.ass)):
             if i == 0:
-                string += "&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;")
+                string += "&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;")
             else:
-                string += "<br>&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;") + "</br>"
+                string += "<br>&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;") + "</br>"
 
         return string
 
@@ -66,8 +79,6 @@ def src_addr_dict(source_name):
 
     file.close()
     return src_to_addrs
-
-# Need to check addrs by substr of last 4 digits of function decl addr, not by converting to int
 
 
 def read_ass_lines(ass_path, start_addr, end_addr):
@@ -117,15 +128,14 @@ def read_functions(src_name):
             addr = src_to_addr[line_num]
             end_func = func_addr_to_name.__contains__(addr)
             end_file = line_num == src_file_lengths[src_name]
-            if end_func or end_file:
+            if end_func:
                 functions.append(Function(fun_name, fun_lines))
                 fun_lines = list()
-                if end_func:
-                    fun_name = func_addr_to_name[addr]
+                fun_name = func_addr_to_name[addr]
 
-                if end_file:
-                    fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
-                    functions.append(Function(fun_name, fun_lines))
+            if end_file:
+                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
+                functions.append(Function(fun_name, fun_lines))
 
             next_key = larger_key(src_to_addr, line_num)
 
@@ -195,12 +205,13 @@ def sequester_assembly():
 
 def func_addrs_to_names():
     f_names = open("./data/fun_names", "r")
-
     addr_to_name = dict()
 
     for line in f_names:
         split = line.split()
         addr_to_name[split[0]] = split[1]
+
+    f_names.close()
 
     return addr_to_name
 
@@ -223,12 +234,12 @@ def create_webpage(file_data, name):
             for sl in function.source:
                 webpage.write("<tr>\n<td valign='top'>\n")
                 webpage.write(str(sl.number))
-                webpage.write("</td>\n<td valign='top'>\n&emsp; ")
+                webpage.write("\n</td>\n<td valign='top'>\n&emsp; ")
                 webpage.write(sl.text)
-                webpage.write("</td>\n<td valign='top'>\n")
+                webpage.write("\n</td>\n<td valign='top'>\n")
                 webpage.write(sl.ass_text())
-                webpage.write("</td>\n</tr>")
-        webpage.write("</table>\n")
+                webpage.write("\n</td>\n</tr>")
+        webpage.write("\n</table>\n")
 
     webpage.write("</body>\n"
                   "</html> ")
@@ -238,7 +249,7 @@ def create_webpage(file_data, name):
 
 def main():
     # print(str(sys.argv))
-    # os.system("./script.sh main")
+    os.system("./script.sh main")
 
     sequester_assembly()
 
@@ -260,17 +271,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-# Assembly function definitions are sometimes tacked onto the end of previous functions,
-# rather than at the start of the function being defined
-
 

@@ -45,4 +45,15 @@ do
   s=$((e+1))
 done
 
+if [ -f ./data/all.out ]; then
+  rm ./data/all.out
+fi
+
+touch all.out
+
+for file in $(ls ./data/*.out)
+do
+  echo "$file" >> all.out
+done
+
 rm ./data/line_nums
