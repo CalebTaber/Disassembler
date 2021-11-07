@@ -66,13 +66,90 @@ def src_addr_dict(source_name):
     src_to_addrs = dict()
     for line in file:
         split = line.split()
-        addr = int(split[0], 16)
+        addr = split[0]
         src = int(split[1])
         if not src_to_addrs.__contains__(src):
             src_to_addrs[src] = addr
 
     file.close()
     return src_to_addrs
+
+
+def read_ass_lines(ass_path, start_addr, end_addr):
+    lines = list()
+    file = open(ass_path, "r")
+
+    include = False
+    for line in file:
+        # Empty string signals to read until EOF
+        if end_addr == "" and include:
+            lines.append(line)
+            continue
+
+        if line.startswith(start_addr) or int(line.split()[0][:4], 16) == int(start_addr, 16):
+            include = True
+        elif line == "" or (end_addr != "" and (int(line.split()[0][:4], 16) == int(end_addr, 16))):
+            return lines
+
+        if include:
+            lines.append(line)
+
+    return lines
+
+
+def larger_key(addr_map: dict, key):
+    for k in sorted(addr_map.keys()):
+        if k > key:
+            return k
+
+    return -1
+
+
+def read_functions(src_name):
+    functions = list()
+    source = open(src_name, "r")
+
+    src_to_addr = src_addr_dict(src_name)
+    fun_name = ""
+
+    line_num = 1
+    fun_lines = list()
+    for src_line in source:
+        if src_to_addr.__contains__(line_num):
+            addr = src_to_addr[line_num]
+            is_func_decl = func_addr_to_name.__contains__(addr)
+            if is_func_decl:
+                f = Function(fun_name, fun_lines)
+                # print(f.to_string())
+                functions.append(f)
+                fun_lines = list()
+                fun_name = func_addr_to_name[addr]
+
+            next_key = larger_key(src_to_addr, line_num)
+
+            if next_key != -1:
+                sl = SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key]))
+                print(sl.to_string())
+                print(sl.ass_text())
+                fun_lines.append(sl)
+            else:
+                sl = SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, ""))
+                print(sl.to_string())
+                print(sl.ass_text())
+                fun_lines.append(sl)
+        else:
+            sl = SourceLine(line_num, src_line, list())
+            print(sl.to_string())
+            print(sl.ass_text())
+            fun_lines.append(sl)
+
+        line_num += 1
+
+    return functions
+
+
+def read_file(src_name):
+    return File(src_name, read_functions(src_name))
 
 
 def addrs_in_file(file_path):
@@ -106,7 +183,7 @@ def sequester_assembly():
                 write = False
 
             if write:
-                ass_out.write(ass)
+                ass_out.write(ass[4:])
                 continue
 
             # If a function line
@@ -125,11 +202,30 @@ def sequester_assembly():
     src_names.close()
 
 
+def func_addrs_to_names():
+    f_names = open("./data/fun_names", "r")
+
+    addr_to_name = dict()
+
+    for line in f_names:
+        split = line.split()
+        addr_to_name[split[0]] = split[1]
+
+    return addr_to_name
+
+
 def main():
     # print(str(sys.argv))
     os.system("./script.sh main")
 
     sequester_assembly()
+
+    global func_addr_to_name
+    func_addr_to_name = func_addrs_to_names()
+
+    file_data = list()
+    for file_name in open("./data/source_names").readline().split():
+        file_data.append(read_file(file_name))
 
     # Compile HTML file
     newHTMLFile("Example")

@@ -11,7 +11,7 @@ objdump -d $1 > ./data/objdump.out
 llvm-dwarfdump --debug-line $1 > ./data/dwarf.out
 
 # Extract function names and addrs from objdump output
-grep -E '[[:alnum:]]{16}\s<.*>' ./data/objdump.out | sed 's/<//g' | sed 's/>//g' | sed 's/://g' | perl -0 -pe 's/\n\Z//' > ./data/fun_names_tmp
+grep -E '[[:alnum:]]{16}\s<.*>' ./data/objdump.out | sed 's/<//g' | sed 's/>//g' | sed 's/://g' | perl -0 -pe 's/\n\Z//' > ./data/fun_names
 
 # Add source file names to an array
 source_names=()
