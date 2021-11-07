@@ -6,28 +6,33 @@ import os
 from os.path import exists
 import sys
 import re
+from datetime import datetime
+import socket
 
 
 class SourceLine:
     def __init__(self, number: int, text: str, ass: list):
         self.number = number  # Line number
-        self.text = text.replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;")  # Line text
+        self.text = text.replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lt;").replace(">", "&gt;")  # Line text
         self.ass = ass  # Corresponding assembly lines (list of strings)
+        for i in range(0, len(self.ass)):
+            self.ass[i] = re.sub(">", "&gt;", re.sub("<", "&lt;", self.ass[i]))
+        self.add_links()
 
     def add_links(self):
         for addr in list(func_addr_to_name.keys()):
             name = func_addr_to_name[addr]
             for i in range(0, len(self.ass)):
                 ass_line = self.ass[i]
-                ass_line = re.sub("<", "&lsaquo;", ass_line)
-                ass_line = re.sub(">", "&rsaquo;", ass_line)
                 # Give function declarations a name
-                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;:$", "<p id=\"" + addr + "\">" + name + "</p>", ass_line)
+                if re.search("&lt;" + name + "&gt;:", ass_line):
+                    ass_line = "<p id=\"" + addr + "\">" + "&emsp; &emsp;" + ass_line + "</p>"
 
                 # Replace function calls with link to function declaration
                 split = ass_line.split()
-                if split[-3] == "callq":
-                    ass_line = re.sub("&lsaquo;" + name + "&rsaquo;$", "<a href=\"#" + addr + "\">" + name + "</a>", ass_line)
+                l = len(split)
+                if split[l - 3] == "callq" and addr.endswith(split[l - 2]):
+                    ass_line = re.sub("&lt;" + name + "&gt;$", "<a href=\"#" + addr + "\">" + name + "</a>", ass_line)
 
                 self.ass[i] = ass_line
 
@@ -35,9 +40,9 @@ class SourceLine:
         string = ""
         for i in range(0, len(self.ass)):
             if i == 0:
-                string += "&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;")
+                string += "&emsp; &emsp;" + self.ass[i]  # .replace(" ", "&ensp;").replace("\t", "&emsp;")
             else:
-                string += "<br>&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;") + "</br>"
+                string += "<br>&emsp; &emsp;" + self.ass[i]  # .replace(" ", "&ensp;").replace("\t", "&emsp;")
 
         return string
 
@@ -215,14 +220,19 @@ def func_addrs_to_names():
     global all_src_addrs
     all_src_addrs = list()
     src_addrs = open("./data/addrs_src_lines", "r")
+
     for line in src_addrs:
         all_src_addrs.append(line.split()[0])
     src_addrs.close()
 
+    global main_addr
+    main_addr = "ffffffffffffffff"
     for line in f_names:
         split = line.split()
         if all_src_addrs.__contains__(split[0]):
             addr_to_name[split[0]] = split[1]
+            if split[1] == "main" and int(split[0]) < int(main_addr, 16):
+                main_addr = split[0]
 
     f_names.close()
 
@@ -236,7 +246,8 @@ def create_webpage(file_data, name):
                   "<html>\n"
                   "<head>\n"
                   "<title>" + name + "</title>\n"
-                  "<p>disassem was run at TODO on TODO. Here is the main function: HYPERLINKmainHYPERLINK</p>\n"
+                  "<p>disassem was run at " + datetime.now().strftime("%H:%M:%S") + " on " + socket.gethostname() +
+                  ". Here is the main function: <a href=\"#" + main_addr + "\">main</a>\n"
                   "</head>\n"
                   "<body>\n")
 
@@ -249,9 +260,9 @@ def create_webpage(file_data, name):
                 webpage.write(str(sl.number))
                 webpage.write("\n</td>\n<td valign='top'>\n&emsp; ")
                 webpage.write(sl.text)
-                webpage.write("\n</td>\n<td valign='top'>\n")
+                webpage.write("\n</td>\n<td valign='top'>\n<p>\n")
                 webpage.write(sl.ass_text())
-                webpage.write("\n</td>\n</tr>")
+                webpage.write("\n</p>\n</td>\n</tr>")
         webpage.write("\n</table>\n")
 
     webpage.write("</body>\n"
