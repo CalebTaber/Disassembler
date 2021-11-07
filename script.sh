@@ -27,17 +27,12 @@ echo "${source_names[*]}" > ./data/source_names
 
 grep -E '0x[[:alnum:]]{16}\s+[0-9]+\s+' ./data/dwarf.out | sed 's/0x//g' | perl -0 -pe 's/\n\Z//' > ./data/addrs_src_lines
 
-
-# Want to separate assembly lines from addrs_src_lines into separate files according to the file name order in source_names
-
 # Gets line numbers of 'is_stmt end_sequence'
 grep -En 'is_stmt end_sequence' ./data/addrs_src_lines | grep -oE '^[[:digit:]]+' | perl -0 -pe 's/\n\Z//' > ./data/line_nums
-
 
 # Put assembly lines into individual files according to source code file
 name_index=0
 s=1
-ass_len=$(wc -l < ./data/addrs_src_lines)
 for e in $(grep -E '.' ./data/line_nums)
 do
   output_file=./data/${source_names[$name_index]}.out
@@ -45,7 +40,6 @@ do
     rm $output_file
   fi
   
-  # | grep -oE '0x[[:alnum:]]{16}\s[[:digit:]]+'
   sed -n "$s,${e}p" ./data/addrs_src_lines | sed 's/0x//g' | perl -0 -pe 's/\n\Z//' >> $output_file
   name_index=$((name_index+1))
   s=$((e+1))

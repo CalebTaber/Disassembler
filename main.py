@@ -10,16 +10,16 @@ import sys
 class SourceLine:
     def __init__(self, number: int, text: str, ass: list):
         self.number = number  # Line number
-        self.text = text  # Line text
+        self.text = text.replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;")  # Line text
         self.ass = ass  # Corresponding assembly lines (list of strings)
 
     def ass_text(self):
         string = ""
-        for i in range(1, len(self.ass)):
-            if i == 1:
-                string += "&emsp; &emsp;" + self.ass[i]
+        for i in range(0, len(self.ass)):
+            if i == 0:
+                string += "&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;")
             else:
-                string += "<br>&emsp; &emsp;" + self.ass[i] + "</br>"
+                string += "<br>&emsp; &emsp;" + self.ass[i].replace(" ", "&ensp;").replace("\t", "&emsp;").replace("<", "&lsaquo;").replace(">", "&rsaquo;") + "</br>"
 
         return string
 
@@ -83,8 +83,11 @@ def read_ass_lines(ass_path, start_addr, end_addr):
 
         if line.startswith(start_addr) or line.split()[0][:4] == start_addr[-4:]:
             include = True
-        elif line == "" or (end_addr != "" and (line.split()[0][:4] == end_addr[-4:])):
-            return lines
+        else:
+            end_substr = end_addr[-4:]
+            line_addr = line.split()[0]
+            if line == "" or (end_addr != "" and (line_addr[:4] == end_substr or line_addr[-4:] == end_substr)):
+                return lines
 
         if include:
             lines.append(line)
@@ -114,23 +117,23 @@ def read_functions(src_name):
             addr = src_to_addr[line_num]
             end_func = func_addr_to_name.__contains__(addr)
             end_file = line_num == src_file_lengths[src_name]
-            # need to check for EOF too ^^^
             if end_func or end_file:
                 functions.append(Function(fun_name, fun_lines))
                 fun_lines = list()
                 if end_func:
                     fun_name = func_addr_to_name[addr]
 
+                if end_file:
+                    fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
+                    functions.append(Function(fun_name, fun_lines))
+
             next_key = larger_key(src_to_addr, line_num)
 
             if next_key != -1:
                 fun_lines.append(SourceLine(line_num, src_line,
                                             read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
-            else:
-                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
         else:
             fun_lines.append(SourceLine(line_num, src_line, list()))
-
         line_num += 1
 
     return functions
@@ -257,3 +260,17 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+
+
+
+# Assembly function definitions are sometimes tacked onto the end of previous functions,
+# rather than at the start of the function being defined
+
+
