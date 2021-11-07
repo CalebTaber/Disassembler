@@ -7,28 +7,19 @@ from os.path import exists
 import sys
 
 
-def newHTMLFile(name):
-    if not exists("./webpages"):
-        os.system("mkdir webpages")
-    new_file = open("./webpages/" + name + ".html", "w")
-    new_file.close()
-    # Create stack of closing tags that need to be added?
-    # Ex: Whenever a <p> is written, add a </p> to the stack
-
-
 class SourceLine:
     def __init__(self, number: int, text: str, ass: list):
         self.number = number  # Line number
         self.text = text  # Line text
         self.ass = ass  # Corresponding assembly lines (list of strings)
 
-    def to_string(self):
-        return str(self.number) + '\t' + self.text
-
     def ass_text(self):
         string = ""
-        for a in self.ass:
-            string += a
+        for i in range(1, len(self.ass)):
+            if i == 1:
+                string += "&emsp; &emsp;" + self.ass[i]
+            else:
+                string += "<br>&emsp; &emsp;" + self.ass[i] + "</br>"
 
         return string
 
@@ -119,16 +110,20 @@ def read_functions(src_name):
     for src_line in source:
         if src_to_addr.__contains__(line_num):
             addr = src_to_addr[line_num]
-            is_func_decl = func_addr_to_name.__contains__(addr)
-            if is_func_decl:
+            end_func = func_addr_to_name.__contains__(addr)
+            end_file = line_num == src_file_lengths[src_name]
+            # need to check for EOF too ^^^
+            if end_func or end_file:
                 functions.append(Function(fun_name, fun_lines))
                 fun_lines = list()
-                fun_name = func_addr_to_name[addr]
+                if end_func:
+                    fun_name = func_addr_to_name[addr]
 
             next_key = larger_key(src_to_addr, line_num)
 
             if next_key != -1:
-                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
+                fun_lines.append(SourceLine(line_num, src_line,
+                                            read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
             else:
                 fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
         else:
@@ -165,7 +160,7 @@ def sequester_assembly():
         if not exists("ass"):
             os.system("mkdir ass")
 
-        ass_out = open("./ass/" + src_name+ ".ass", "w")
+        ass_out = open("./ass/" + src_name + ".ass", "w")
         addrs = addrs_in_file("./data/" + src_name + ".out")
 
         write = False
@@ -205,6 +200,37 @@ def func_addrs_to_names():
     return addr_to_name
 
 
+def create_webpage(file_data, name):
+    webpage = open(name + ".html", "w")
+
+    webpage.write(" <!DOCTYPE html>\n"
+                  "<html>\n"
+                  "<head>\n"
+                  "<title>" + name + "</title>\n"
+                  "<p>disassem was run at TODO on TODO. Here is the main function: HYPERLINKmainHYPERLINK</p>\n"
+                  "</head>\n"
+                  "<body>\n")
+
+    for file in file_data:
+        webpage.write("<h1>" + file.name + "</h1>\n")
+        webpage.write("<table border=1 frame=void rules=rows>\n")
+        for function in file.functions:
+            for sl in function.source:
+                webpage.write("<tr>\n<td valign='top'>\n")
+                webpage.write(str(sl.number))
+                webpage.write("</td>\n<td valign='top'>\n&emsp; ")
+                webpage.write(sl.text)
+                webpage.write("</td>\n<td valign='top'>\n")
+                webpage.write(sl.ass_text())
+                webpage.write("</td>\n</tr>")
+        webpage.write("</table>\n")
+
+    webpage.write("</body>\n"
+                  "</html> ")
+
+    webpage.close()
+
+
 def main():
     # print(str(sys.argv))
     os.system("./script.sh main")
@@ -214,12 +240,17 @@ def main():
     global func_addr_to_name
     func_addr_to_name = func_addrs_to_names()
 
+    global src_file_lengths
+    src_file_lengths = dict()
+
     file_data = list()
     for file_name in open("./data/source_names").readline().split():
+        f = open(file_name)
+        src_file_lengths[file_name] = len(f.readlines())
+        f.close()
         file_data.append(read_file(file_name))
 
-    for file in file_data:
-        newHTMLFile(file.name)
+    create_webpage(file_data, sys.argv[1])
 
 
 if __name__ == "__main__":
