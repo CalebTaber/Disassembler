@@ -39,7 +39,7 @@ do
   if [ -f $output_file ]; then
     rm $output_file
   fi
-  
+
   sed -n "$s,${e}p" ./data/addrs_src_lines | sed 's/0x//g' | perl -0 -pe 's/\n\Z//' >> $output_file
   name_index=$((name_index+1))
   s=$((e+1))
