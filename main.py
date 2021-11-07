@@ -67,6 +67,8 @@ def src_addr_dict(source_name):
     file.close()
     return src_to_addrs
 
+# Need to check addrs by substr of last 4 digits of function decl addr, not by converting to int
+
 
 def read_ass_lines(ass_path, start_addr, end_addr):
     lines = list()
@@ -79,9 +81,9 @@ def read_ass_lines(ass_path, start_addr, end_addr):
             lines.append(line)
             continue
 
-        if line.startswith(start_addr) or int(line.split()[0][:4], 16) == int(start_addr, 16):
+        if line.startswith(start_addr) or line.split()[0][:4] == start_addr[-4:]:
             include = True
-        elif line == "" or (end_addr != "" and (int(line.split()[0][:4], 16) == int(end_addr, 16))):
+        elif line == "" or (end_addr != "" and (line.split()[0][:4] == end_addr[-4:])):
             return lines
 
         if include:
@@ -233,7 +235,7 @@ def create_webpage(file_data, name):
 
 def main():
     # print(str(sys.argv))
-    os.system("./script.sh main")
+    # os.system("./script.sh main")
 
     sequester_assembly()
 
