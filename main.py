@@ -8,7 +8,9 @@ import sys
 
 
 def newHTMLFile(name):
-    new_file = open(name + ".html", "w")
+    if not exists("./webpages"):
+        os.system("mkdir webpages")
+    new_file = open("./webpages/" + name + ".html", "w")
     new_file.close()
     # Create stack of closing tags that need to be added?
     # Ex: Whenever a <p> is written, add a </p> to the stack
@@ -119,29 +121,18 @@ def read_functions(src_name):
             addr = src_to_addr[line_num]
             is_func_decl = func_addr_to_name.__contains__(addr)
             if is_func_decl:
-                f = Function(fun_name, fun_lines)
-                # print(f.to_string())
-                functions.append(f)
+                functions.append(Function(fun_name, fun_lines))
                 fun_lines = list()
                 fun_name = func_addr_to_name[addr]
 
             next_key = larger_key(src_to_addr, line_num)
 
             if next_key != -1:
-                sl = SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key]))
-                print(sl.to_string())
-                print(sl.ass_text())
-                fun_lines.append(sl)
+                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
             else:
-                sl = SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, ""))
-                print(sl.to_string())
-                print(sl.ass_text())
-                fun_lines.append(sl)
+                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
         else:
-            sl = SourceLine(line_num, src_line, list())
-            print(sl.to_string())
-            print(sl.ass_text())
-            fun_lines.append(sl)
+            fun_lines.append(SourceLine(line_num, src_line, list()))
 
         line_num += 1
 
@@ -227,8 +218,8 @@ def main():
     for file_name in open("./data/source_names").readline().split():
         file_data.append(read_file(file_name))
 
-    # Compile HTML file
-    newHTMLFile("Example")
+    for file in file_data:
+        newHTMLFile(file.name)
 
 
 if __name__ == "__main__":
