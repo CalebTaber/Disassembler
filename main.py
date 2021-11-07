@@ -78,7 +78,7 @@ class File:
 
 # Maps the source line to the first address of equivalent assembly
 def src_addr_dict(source_name):
-    file = open("./data/" + source_name + ".out", "r")
+    file = open("./.data/" + source_name + ".out", "r")
     src_to_addrs = dict()
     for line in file:
         split = line.split()
@@ -89,6 +89,11 @@ def src_addr_dict(source_name):
 
     file.close()
     return src_to_addrs
+
+
+def clean_up():
+    os.system("rm -r ./.data")
+    os.system("rm -r ./.ass")
 
 
 def read_ass_lines(ass_path, start_addr, end_addr):
@@ -144,14 +149,14 @@ def read_functions(src_name):
                 fun_name = func_addr_to_name[addr]
 
             if end_file:
-                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./ass/" + src_name + ".ass", addr, "")))
+                fun_lines.append(SourceLine(line_num, src_line, read_ass_lines("./.ass/" + src_name + ".ass", addr, "")))
                 functions.append(Function(fun_name, fun_lines))
 
             next_key = larger_key(src_to_addr, line_num)
 
             if next_key != -1:
                 fun_lines.append(SourceLine(line_num, src_line,
-                                            read_ass_lines("./ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
+                                            read_ass_lines("./.ass/" + src_name + ".ass", addr, src_to_addr[next_key])))
         else:
             fun_lines.append(SourceLine(line_num, src_line, list()))
         line_num += 1
@@ -179,17 +184,18 @@ def addrs_in_file(file_path):
 
 
 def sequester_assembly():
-    src_names = open("./data/source_names", "r")
+    os.system("bash ./get_dd_and_llvm_output " + sys.argv[1])
+    src_names = open("./.data/source_names", "r")
 
     for src_name in src_names.readline().split():
-        if not exists("ass"):
-            os.system("mkdir ass")
+        if not exists(".ass"):
+            os.system("mkdir .ass")
 
-        ass_out = open("./ass/" + src_name + ".ass", "w")
-        addrs = addrs_in_file("./data/" + src_name + ".out")
+        ass_out = open("./.ass/" + src_name + ".ass", "w")
+        addrs = addrs_in_file("./.data/" + src_name + ".out")
 
         write = False
-        for ass in open("./data/objdump.out", "r"):
+        for ass in open("./.data/objdump.out", "r"):
             if ass == "\n":
                 write = False
 
@@ -214,12 +220,12 @@ def sequester_assembly():
 
 
 def func_addrs_to_names():
-    f_names = open("./data/fun_names", "r")
+    f_names = open("./.data/fun_names", "r")
     addr_to_name = dict()
 
     global all_src_addrs
     all_src_addrs = list()
-    src_addrs = open("./data/addrs_src_lines", "r")
+    src_addrs = open("./.data/addrs_src_lines", "r")
 
     for line in src_addrs:
         all_src_addrs.append(line.split()[0])
@@ -246,7 +252,7 @@ def create_webpage(file_data, name):
                   "<html>\n"
                   "<head>\n"
                   "<title>" + name + "</title>\n"
-                  "<p>disassem was run at " + datetime.now().strftime("%H:%M:%S") + " on " + socket.gethostname() +
+                  "disassem was run at " + datetime.now().strftime("%H:%M:%S") + " on " + socket.gethostname() +
                   ". Here is the main function: <a href=\"#" + main_addr + "\">main</a>\n"
                   "</head>\n"
                   "<body>\n")
@@ -272,9 +278,10 @@ def create_webpage(file_data, name):
 
 
 def main():
-    # print(str(sys.argv))
-    # os.system("./script.sh main")
-
+    if not exists("./.data"):
+        os.system("mkdir ./.data")
+    os.system("objdump -d " + sys.argv[1] + " > ./.data/objdump.out")
+    os.system("llvm-dwarfdump --debug-line " + sys.argv[1] + " > ./.data/dwarf.out")
     sequester_assembly()
 
     global func_addr_to_name
@@ -284,13 +291,15 @@ def main():
     src_file_lengths = dict()
 
     file_data = list()
-    for file_name in open("./data/source_names").readline().split():
+    for file_name in open("./.data/source_names").readline().split():
         f = open(file_name)
         src_file_lengths[file_name] = len(f.readlines())
         f.close()
         file_data.append(read_file(file_name))
 
     create_webpage(file_data, sys.argv[1])
+
+    clean_up()
 
 
 if __name__ == "__main__":
