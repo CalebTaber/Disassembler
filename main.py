@@ -15,15 +15,20 @@ class SourceLine:
         self.ass = ass  # Corresponding assembly lines (list of strings)
 
     def add_links(self):
-        for name in func_addr_to_name.values():
+        for addr in list(func_addr_to_name.keys()):
+            name = func_addr_to_name[addr]
             for i in range(0, len(self.ass)):
                 ass_line = self.ass[i]
                 ass_line = re.sub("<", "&lsaquo;", ass_line)
                 ass_line = re.sub(">", "&rsaquo;", ass_line)
-                # Replace function calls with link to function declaration
-                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;$", "<a href=\"#" + name + "\">" + name + "</a>", ass_line)
                 # Give function declarations a name
-                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;:$", "<p id=\"" + name + "\">" + name + "</p>", ass_line)
+                ass_line = re.sub("&lsaquo;" + name + "&rsaquo;:$", "<p id=\"" + addr + "\">" + name + "</p>", ass_line)
+
+                # Replace function calls with link to function declaration
+                split = ass_line.split()
+                if split[-3] == "callq":
+                    ass_line = re.sub("&lsaquo;" + name + "&rsaquo;$", "<a href=\"#" + addr + "\">" + name + "</a>", ass_line)
+
                 self.ass[i] = ass_line
 
     def ass_text(self):
@@ -207,9 +212,17 @@ def func_addrs_to_names():
     f_names = open("./data/fun_names", "r")
     addr_to_name = dict()
 
+    global all_src_addrs
+    all_src_addrs = list()
+    src_addrs = open("./data/addrs_src_lines", "r")
+    for line in src_addrs:
+        all_src_addrs.append(line.split()[0])
+    src_addrs.close()
+
     for line in f_names:
         split = line.split()
-        addr_to_name[split[0]] = split[1]
+        if all_src_addrs.__contains__(split[0]):
+            addr_to_name[split[0]] = split[1]
 
     f_names.close()
 
