@@ -249,7 +249,7 @@ def create_webpage(file_data, name):
 
 def main():
     # print(str(sys.argv))
-    os.system("./script.sh main")
+    # os.system("./script.sh main")
 
     sequester_assembly()
 
