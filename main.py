@@ -25,6 +25,7 @@ class SourceLine:
             for i in range(0, len(self.ass)):
                 ass_line = self.ass[i]
                 # Give function declarations a name
+                # <func_name>
                 if re.search("&lt;" + name + "&gt;:", ass_line):
                     ass_line = "<p id=\"" + addr + "\">" + "&emsp; &emsp;" + ass_line + "</p>"
 
@@ -32,7 +33,7 @@ class SourceLine:
                 split = ass_line.split()
                 l = len(split)
                 if split[l - 3] == "callq" and addr.endswith(split[l - 2]):
-                    ass_line = re.sub("&lt;" + name + "&gt;$", "<a href=\"#" + addr + "\">" + name + "</a>", ass_line)
+                    ass_line = re.sub(name, "<a href=\"#" + addr + "\">" + name + "</a>", ass_line)
 
                 self.ass[i] = ass_line
 
@@ -89,11 +90,6 @@ def src_addr_dict(source_name):
 
     file.close()
     return src_to_addrs
-
-
-def clean_up():
-    os.system("rm -r ./.data")
-    os.system("rm -r ./.ass")
 
 
 def read_ass_lines(ass_path, start_addr, end_addr):
@@ -270,7 +266,8 @@ def create_webpage(file_data, name):
                 webpage.write(sl.ass_text())
                 webpage.write("\n</p>\n</td>\n</tr>")
         webpage.write("\n</table>\n")
-
+    os.system("rm -r ./.data")
+    os.system("rm -r ./.ass")
     webpage.write("</body>\n"
                   "</html> ")
 
@@ -298,8 +295,6 @@ def main():
         file_data.append(read_file(file_name))
 
     create_webpage(file_data, sys.argv[1])
-
-    clean_up()
 
 
 if __name__ == "__main__":
