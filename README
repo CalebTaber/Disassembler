@@ -1,0 +1,64 @@
+Caleb Taber (ctaber2@u.rochester.edu)
+CSC 254, A4
+11/07/2021
+
+
+------------------RUNNING INSTRUCTIONS------------------
+I wrote my program in Python 3, so run it as such:
+
+    python3 disassem.py executable_name
+
+
+-------------------ORGANIZATION AND PHILOSOPY-------------------
+I have the source and assembly data organized with a few
+classes:
+
+The File class has a name and a list of Function objects.
+
+The Function class has a name and a list of SourceLine objects.
+
+The SourceLine class has a string for the line of source code
+it represents. It also has a list of strings that represent
+the corresponding assembly.
+
+I thought this would be a good structure since it makes for
+easy deliniation at pretty much every level (file, function,
+and line) and makes processing in order quite simple. In
+retrospect, I still think this was a good way to do it.
+
+
+--------------------------IMPLEMENTATION------------------------
+Right off the bat, I want to say that this was my first
+interaction with HTML, and I am far from good at optimizing it.
+The files that my program creates are rather large (I think),
+but they do work. They're also kind of ugly (why I'm not a BA).
+
+After wrangling the data (can't really point you to a specific
+function here; I'm doing data processing in pretty much all of
+them), I read the code into objects. The function that does most
+of the heavy lifting here is read_functions(). It iterates
+through each line of source code and finds the corresponding
+assembly, then stores that in a SourceLine object. Then with
+all of those SourceLine objects, it creates a Function object
+and stores that in a list with the others in the file.
+
+With all of the data read into objects, I use my
+create_webpage() function to compile it all into HTML.
+This part is pretty simple. I just create a header
+for each file name, then add a huge table with a row
+for each line of source code and its assembly. Then rinse
+and repeat with the rest of the files and append those tables
+and headers to the HTML file. Then, bam! We've got a very long
+HTML file.
+
+
+--------------------------KNOWN BUGS-----------------------------
+For the most part, my disassem tool works well, but I have
+noticed that sometimes large chunks of assembly will be
+incorrectly attributed to a random source line (e.g. I saw like
+20 lines of assembly pinned to one '}'. Might be right, but it
+doesn't seem like a '}' would be doing that much work).
+
+I haven't done extensive testing, so that's the only bug I'm
+acutely aware of. But I'm sure there are a few others hiding in
+the eaves.

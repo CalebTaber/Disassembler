@@ -1,5 +1,5 @@
 # Caleb Taber (ctaber2@u.rochester.edu)
-# CSC 254, A3
+# CSC 254, A4
 # 11/07/2021
 
 import os
@@ -233,7 +233,7 @@ def func_addrs_to_names():
         split = line.split()
         if all_src_addrs.__contains__(split[0]):
             addr_to_name[split[0]] = split[1]
-            if split[1] == "main" and int(split[0]) < int(main_addr, 16):
+            if split[1] == "main" and int(split[0], 16) < int(main_addr, 16):
                 main_addr = split[0]
 
     f_names.close()
@@ -266,8 +266,10 @@ def create_webpage(file_data, name):
                 webpage.write(sl.ass_text())
                 webpage.write("\n</p>\n</td>\n</tr>")
         webpage.write("\n</table>\n")
-    os.system("rm -r ./.data")
-    os.system("rm -r ./.ass")
+    if exists("./.data"):
+        os.system("rm -r ./.data")
+    if exists("./.ass"):
+        os.system("rm -r ./.ass")
     webpage.write("</body>\n"
                   "</html> ")
 
